@@ -3,7 +3,6 @@ import 'package:flutter/material.dart';
 import 'package:webview_flutter/webview_flutter.dart';
 import 'package:connectivity_plus/connectivity_plus.dart';
 
-// ⚠️ CHANGE CETTE URL
 const String SITE_URL = 'https://excellencedigital.alwaysdata.net';
 
 class WebViewScreen extends StatefulWidget {
@@ -17,6 +16,7 @@ class _WebViewScreenState extends State<WebViewScreen> {
   late final WebViewController controller;
   bool isLoading = true;
   bool isOffline = false;
+  String errorMessage = '';
   double progress = 0;
   StreamSubscription? connectivitySubscription;
 
@@ -34,7 +34,10 @@ class _WebViewScreenState extends State<WebViewScreen> {
       ..setNavigationDelegate(
         NavigationDelegate(
           onPageStarted: (url) {
-            setState(() => isLoading = true);
+            setState(() {
+              isLoading = true;
+              errorMessage = '';
+            });
           },
           onPageFinished: (url) {
             setState(() => isLoading = false);
@@ -42,8 +45,14 @@ class _WebViewScreenState extends State<WebViewScreen> {
           onProgress: (int progress) {
             setState(() => this.progress = progress / 100);
           },
-          onWebResourceError: (error) {
-            setState(() => isOffline = true);
+          onWebResourceError: (WebResourceError error) {
+            print('❌ Erreur WebView: ${error.description}');
+            print('   Code: ${error.errorCode}');
+            print('   URL: ${error.failingUrl}');
+            setState(() {
+              isOffline = true;
+              errorMessage = '${error.description} (Code: ${error.errorCode})';
+            });
           },
         ),
       )
@@ -57,7 +66,10 @@ class _WebViewScreenState extends State<WebViewScreen> {
       if (results.contains(ConnectivityResult.none)) {
         setState(() => isOffline = true);
       } else {
-        setState(() => isOffline = false);
+        setState(() {
+          isOffline = false;
+          errorMessage = '';
+        });
         controller.reload();
       }
     });
@@ -87,9 +99,8 @@ class _WebViewScreenState extends State<WebViewScreen> {
           child: Stack(
             children: [
               // WebView
-              if (!isOffline)
-                WebViewWidget(controller: controller),
-              
+              if (!isOffline) WebViewWidget(controller: controller),
+
               // Barre de progression
               if (isLoading && !isOffline)
                 Positioned(
@@ -99,68 +110,70 @@ class _WebViewScreenState extends State<WebViewScreen> {
                   child: LinearProgressIndicator(
                     value: progress,
                     backgroundColor: Colors.transparent,
-                    valueColor: const AlwaysStoppedAnimation<Color>(
-                      Color(0xFF3B82F6),
-                    ),
+                    valueColor:
+                        const AlwaysStoppedAnimation<Color>(Color(0xFF3B82F6)),
                     minHeight: 3,
                   ),
                 ),
-              
-              // Écran hors-ligne
+
+              // Écran hors-ligne ou erreur
               if (isOffline)
                 Center(
-                  child: Column(
-                    mainAxisAlignment: MainAxisAlignment.center,
-                    children: [
-                      Container(
-                        width: 80, height: 80,
-                        decoration: BoxDecoration(
-                          borderRadius: BorderRadius.circular(20),
-                          color: Colors.white.withOpacity(0.05),
-                        ),
-                        child: const Icon(
-                          Icons.wifi_off_rounded,
-                          color: Color(0xFF64748B),
-                          size: 40,
-                        ),
-                      ),
-                      const SizedBox(height: 24),
-                      const Text(
-                        'Pas de connexion Internet',
-                        style: TextStyle(
-                          color: Colors.white,
-                          fontSize: 16,
-                          fontWeight: FontWeight.w600,
-                        ),
-                      ),
-                      const SizedBox(height: 8),
-                      Text(
-                        'Vérifiez votre connexion et réessayez',
-                        style: TextStyle(
-                          color: Colors.white.withOpacity(0.5),
-                          fontSize: 13,
-                        ),
-                      ),
-                      const SizedBox(height: 32),
-                      ElevatedButton.icon(
-                        onPressed: () {
-                          setState(() => isOffline = false);
-                          controller.reload();
-                        },
-                        icon: const Icon(Icons.refresh, size: 20),
-                        label: const Text('Réessayer'),
-                        style: ElevatedButton.styleFrom(
-                          backgroundColor: const Color(0xFF3B82F6),
-                          foregroundColor: Colors.white,
-                          padding: const EdgeInsets.symmetric(
-                            horizontal: 24, vertical: 14,
+                  child: Padding(
+                    padding: const EdgeInsets.all(32),
+                    child: Column(
+                      mainAxisAlignment: MainAxisAlignment.center,
+                      children: [
+                        Container(
+                          width: 80,
+                          height: 80,
+                          decoration: BoxDecoration(
+                            borderRadius: BorderRadius.circular(20),
+                            color: Colors.white.withOpacity(0.05),
                           ),
-                          shape: RoundedRectangleBorder(
-                            borderRadius: BorderRadius.circular(14),
+                          child: const Icon(Icons.wifi_off_rounded,
+                              color: Color(0xFF64748B), size: 40),
+                        ),
+                        const SizedBox(height: 24),
+                        const Text(
+                          'Connexion impossible',
+                          style: TextStyle(
+                              color: Colors.white,
+                              fontSize: 16,
+                              fontWeight: FontWeight.w600),
+                        ),
+                        const SizedBox(height: 8),
+                        Text(
+                          errorMessage.isNotEmpty
+                              ? errorMessage
+                              : 'Vérifiez votre connexion Internet',
+                          textAlign: TextAlign.center,
+                          style: TextStyle(
+                              color: Colors.white.withOpacity(0.5),
+                              fontSize: 13),
+                        ),
+                        const SizedBox(height: 32),
+                        ElevatedButton.icon(
+                          onPressed: () {
+                            setState(() {
+                              isOffline = false;
+                              errorMessage = '';
+                            });
+                            controller.reload();
+                          },
+                          icon: const Icon(Icons.refresh, size: 20),
+                          label: const Text('Réessayer'),
+                          style: ElevatedButton.styleFrom(
+                            backgroundColor: const Color(0xFF3B82F6),
+                            foregroundColor: Colors.white,
+                            padding: const EdgeInsets.symmetric(
+                                horizontal: 24, vertical: 14),
+                            shape: RoundedRectangleBorder(
+                                borderRadius: BorderRadius.circular(14)),
                           ),
                         ),
-                      ),
-                    ],
+                      ],
+                    ),
                   ),
                 ),
             ],
