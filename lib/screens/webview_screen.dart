@@ -46,9 +46,9 @@ class _WebViewScreenState extends State<WebViewScreen> {
             setState(() => this.progress = progress / 100);
           },
           onWebResourceError: (WebResourceError error) {
-            print('❌ Erreur WebView: ${error.description}');
+            print('❌ Erreur WebView');
+            print('   Description: ${error.description}');
             print('   Code: ${error.errorCode}');
-            print('   URL: ${error.failingUrl}');
             setState(() {
               isOffline = true;
               errorMessage = '${error.description} (Code: ${error.errorCode})';
@@ -98,10 +98,7 @@ class _WebViewScreenState extends State<WebViewScreen> {
         body: SafeArea(
           child: Stack(
             children: [
-              // WebView
               if (!isOffline) WebViewWidget(controller: controller),
-
-              // Barre de progression
               if (isLoading && !isOffline)
                 Positioned(
                   top: 0,
@@ -115,8 +112,6 @@ class _WebViewScreenState extends State<WebViewScreen> {
                     minHeight: 3,
                   ),
                 ),
-
-              // Écran hors-ligne ou erreur
               if (isOffline)
                 Center(
                   child: Padding(
