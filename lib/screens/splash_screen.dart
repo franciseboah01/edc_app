@@ -1,5 +1,6 @@
 import 'package:flutter/material.dart';
-import 'webview_screen.dart';
+//import 'webview_screen.dart';
+import 'home_screen.dart';
 
 class SplashScreen extends StatefulWidget {
   const SplashScreen({super.key});
@@ -10,7 +11,6 @@ class SplashScreen extends StatefulWidget {
 
 class _SplashScreenState extends State<SplashScreen>
     with SingleTickerProviderStateMixin {
-  
   late AnimationController _controller;
   late Animation<double> _fadeAnimation;
   late Animation<double> _scaleAnimation;
@@ -18,29 +18,30 @@ class _SplashScreenState extends State<SplashScreen>
   @override
   void initState() {
     super.initState();
-    
+
     _controller = AnimationController(
       duration: const Duration(milliseconds: 1500),
       vsync: this,
     );
-    
+
     _fadeAnimation = Tween<double>(begin: 0.0, end: 1.0).animate(
       CurvedAnimation(parent: _controller, curve: Curves.easeIn),
     );
-    
+
     _scaleAnimation = Tween<double>(begin: 0.5, end: 1.0).animate(
       CurvedAnimation(parent: _controller, curve: Curves.elasticOut),
     );
-    
+
     _controller.forward();
-    
+
     // Rediriger après 2.5 secondes
     Future.delayed(const Duration(milliseconds: 2500), () {
       if (mounted) {
         Navigator.pushReplacement(
           context,
           PageRouteBuilder(
-            pageBuilder: (_, __, ___) => const WebViewScreen(),
+            //pageBuilder: (_, __, ___) => const WebViewScreen(),
+            pageBuilder: (_, __, ___) => const HomeScreen(),
             transitionsBuilder: (_, animation, __, child) {
               return FadeTransition(opacity: animation, child: child);
             },
@@ -107,9 +108,9 @@ class _SplashScreenState extends State<SplashScreen>
                   ),
                 ),
               ),
-              
+
               const SizedBox(height: 28),
-              
+
               // Nom de l'app
               const Text(
                 'Excellence Digital Center',
@@ -119,9 +120,9 @@ class _SplashScreenState extends State<SplashScreen>
                   fontWeight: FontWeight.w700,
                 ),
               ),
-              
+
               const SizedBox(height: 8),
-              
+
               // Sous-titre
               Text(
                 'Former • Créer • Réussir',
@@ -131,9 +132,9 @@ class _SplashScreenState extends State<SplashScreen>
                   fontWeight: FontWeight.w500,
                 ),
               ),
-              
+
               const SizedBox(height: 48),
-              
+
               // Loader
               SizedBox(
                 width: 28,
