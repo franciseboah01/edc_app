@@ -12,6 +12,7 @@ dependencies:
   cupertino_icons: ^1.0.8
   webview_flutter: ^4.10.0
   connectivity_plus: ^6.1.0
+  package_info_plus: ^10.2.0
 
 dev_dependencies:
   flutter_test:

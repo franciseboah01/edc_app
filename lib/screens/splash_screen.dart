@@ -1,6 +1,7 @@
 import 'package:flutter/material.dart';
 //import 'webview_screen.dart';
 import 'home_screen.dart';
+import '../services/version_service.dart';
 
 class SplashScreen extends StatefulWidget {
   const SplashScreen({super.key});
@@ -34,22 +35,103 @@ class _SplashScreenState extends State<SplashScreen>
 
     _controller.forward();
 
-    // Rediriger après 2.5 secondes
-    Future.delayed(const Duration(milliseconds: 2500), () {
+    _checkAndNavigate();
+  }
+
+  Future<void> _checkAndNavigate() async {
+    await Future.delayed(const Duration(milliseconds: 2500));
+
+    if (!mounted) return;
+
+    // Vérifier mise à jour
+    final updateAvailable = await VersionService.isUpdateAvailable();
+
+    if (updateAvailable) {
+      final data = await VersionService.checkUpdate();
+      final apkUrl = data?['android']?['apk_url'];
+      final notes = data?['android']?['notes'] ?? '';
+
       if (mounted) {
-        Navigator.pushReplacement(
-          context,
-          PageRouteBuilder(
-            //pageBuilder: (_, __, ___) => const WebViewScreen(),
-            pageBuilder: (_, __, ___) => const HomeScreen(),
-            transitionsBuilder: (_, animation, __, child) {
-              return FadeTransition(opacity: animation, child: child);
-            },
-            transitionDuration: const Duration(milliseconds: 500),
-          ),
-        );
+        _showUpdateDialog(apkUrl, notes);
       }
-    });
+    } else {
+      _navigateToHome();
+    }
+  }
+
+  void _showUpdateDialog(String? apkUrl, String notes) {
+    showDialog(
+      context: context,
+      barrierDismissible: false,
+      builder: (context) => AlertDialog(
+        backgroundColor: const Color(0xFF1A2235),
+        shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(20)),
+        title: const Row(
+          children: [
+            Text('🚀', style: TextStyle(fontSize: 28)),
+            SizedBox(width: 12),
+            Text('Mise à jour disponible',
+                style: TextStyle(
+                    color: Colors.white,
+                    fontSize: 18,
+                    fontWeight: FontWeight.w700)),
+          ],
+        ),
+        content: Column(
+          mainAxisSize: MainAxisSize.min,
+          crossAxisAlignment: CrossAxisAlignment.start,
+          children: [
+            const Text('Une nouvelle version de l\'application est disponible.',
+                style: TextStyle(color: Color(0xFF94A3B8), fontSize: 14)),
+            if (notes.isNotEmpty) ...[
+              const SizedBox(height: 12),
+              Text('📝 $notes',
+                  style:
+                      const TextStyle(color: Color(0xFF64748B), fontSize: 12)),
+            ],
+          ],
+        ),
+        actions: [
+          TextButton(
+            onPressed: () {
+              Navigator.pop(context);
+              _navigateToHome();
+            },
+            child: const Text('Plus tard',
+                style: TextStyle(color: Color(0xFF64748B))),
+          ),
+          ElevatedButton.icon(
+            onPressed: () {
+              if (apkUrl != null) {
+                // Ouvrir l'URL de téléchargement
+                // nécessite url_launcher
+              }
+            },
+            icon: const Icon(Icons.download_rounded, size: 18),
+            label: const Text('Télécharger'),
+            style: ElevatedButton.styleFrom(
+              backgroundColor: const Color(0xFF3B82F6),
+              foregroundColor: Colors.white,
+              shape: RoundedRectangleBorder(
+                  borderRadius: BorderRadius.circular(12)),
+            ),
+          ),
+        ],
+      ),
+    );
+  }
+
+  void _navigateToHome() {
+    Navigator.pushReplacement(
+      context,
+      PageRouteBuilder(
+        pageBuilder: (_, __, ___) => const HomeScreen(),
+        transitionsBuilder: (_, animation, __, child) {
+          return FadeTransition(opacity: animation, child: child);
+        },
+        transitionDuration: const Duration(milliseconds: 500),
+      ),
+    );
   }
 
   @override
